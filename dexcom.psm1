@@ -128,9 +128,9 @@ function Get-DexcomShareSessionId
     param
     (
         [Parameter(ValueFromPipelineByPropertyName=$true)][string]$ApplicationId=$Script:Dexcom_Settings.ApplicationId,
-        [Parameter(ValueFromPipelineByPropertyName=$true,Mandatory=$true,ParameterSetName='Clear')][string]$AccountName,
-        [Parameter(ValueFromPipelineByPropertyName=$true,Mandatory=$true,ParameterSetName='Clear')][string]$AccountSecret,
-        [Parameter(ValueFromPipelineByPropertyName=$true,Mandatory=$true,ParameterSetName='Credential')][pscredential]$Account,    
+        [Parameter(ValueFromPipelineByPropertyName=$true,Mandatory=$true,ParameterSetName='Clear')][Alias('UserName')][string]$AccountName,
+        [Parameter(ValueFromPipelineByPropertyName=$true,Mandatory=$true,ParameterSetName='Clear')][Alias('Password')][string]$AccountSecret,
+        [Parameter(ValueFromPipelineByPropertyName=$true,Mandatory=$true,ParameterSetName='Credential')][Alias('DexcomAccount')][pscredential]$Account,    
         [Parameter(ValueFromPipelineByPropertyName=$true)][uri]$AuthUri=$Script:Dexcom_Settings.ShareApi.US
     )
     
@@ -161,18 +161,41 @@ function Get-DexcomShareSessionId
                 Method='POST'
             }
             $Response=Invoke-WebRequest @RequestParams -Body $(@{applicationId=$ApplicationId;accountName=$AccountName;password=$AccountSecret}|ConvertTo-Json)
-            $SessionId=$Response.Content
-            Write-Output $SessionId.Replace('"',"")
+            $SessionId=$Response.Content.Replace('"',"")
         }
         catch {
+            $ErrorContent=$_.Exception.Message
             #Should I unwind the exception?
-            throw $_
+            if($PSVersionTable.PSVersion.Major -lt 6) {
+                $ErrorStream = $itemException.Response.GetResponseStream()
+                $ErrorStream.Position = 0
+                $StreamReader = New-Object System.IO.StreamReader($ErrorStream)
+                try
+                {
+                    $ErrorContent = $StreamReader.ReadToEnd()
+                    $StreamReader.Close()
+                }
+                catch
+                {
+
+                }
+                finally
+                {
+                    $StreamReader.Close()
+                }
+            }
+            else {
+                $ErrorContent=$_.ErrorDetails.Message
+            }
+            Write-Error "An Error Occurred!`t${ErrorContent}"
         }
+        if($SessionId -eq [Guid]::Empty) {
+            throw 'No Session Id was returned! Please check your account details.'
+        }
+        Write-Output $SessionId
     }
-    
-    end {
-        
-    }
+
+    end {}
 }
 
 <#
@@ -189,19 +212,20 @@ function Get-DexcomShareSessionId
     .PARAMETER MaxCount
         The maximum amount of records to retrieve
 #>
-function Get-DexcomLatestGlucoseValues
+function Get-DexcomShareLatestGlucoseValues
 {
     [CmdletBinding()]
     param
     (
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)][Uri]$ApiEndpoint=$Script:Dexcom_Settings.ShareApi.US,
         [Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true,ValueFromPipeline=$true)][string[]]$SessionId,
-        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)][int]$IntervalInMinutes=1440,
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)][Alias('Interval')][int]$IntervalInMinutes=1440,
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)][int]$MaxCount=[Math]::Floor($IntervalInMinutes/12),
         [Parameter(ValueFromPipelineByPropertyName=$true)][switch]$AsNightscout
     )
     begin
     {
+        $Results=@()
         $RequestBuilder=New-Object UriBuilder "https://${ApiEndpoint}"
         $RequestBuilder.Path='/ShareWebServices/Services/Publisher/ReadPublisherLatestGlucoseValues'
         $RequestParams=@{
@@ -210,7 +234,6 @@ function Get-DexcomLatestGlucoseValues
             Method='Post'
             UseBasicParsing=$true
         }
-        $Results=@()
     }
     process
     {
@@ -233,7 +256,31 @@ function Get-DexcomLatestGlucoseValues
             }
             catch
             {
-                #Should I catch this and keep going?
+                #Should I catch this and keep going, or bother unwinding?
+                $ErrorContent=$_.Exception.Message
+                #Should I unwind the exception?
+                if($PSVersionTable.PSVersion.Major -lt 6) {
+                    $ErrorStream = $itemException.Response.GetResponseStream()
+                    $ErrorStream.Position = 0
+                    $StreamReader = New-Object System.IO.StreamReader($ErrorStream)
+                    try
+                    {
+                        $ErrorContent = $StreamReader.ReadToEnd()
+                        $StreamReader.Close()
+                    }
+                    catch
+                    {
+    
+                    }
+                    finally
+                    {
+                        $StreamReader.Close()
+                    }
+                }
+                else {
+                    $ErrorContent=$_.ErrorDetails.Message
+                }
+                Write-Warning "An Error Occurred!`t${ErrorContent}"
             }
         }
     }
@@ -242,3 +289,6 @@ function Get-DexcomLatestGlucoseValues
         Write-Output $Results
     }
 }
+
+New-Alias -Name 'Login-DexcomShare' -Value 'Get-DexcomShareSessionId'
+New-Alias -Name 'Get-LatestBSG' -Value 'Get-DexcomShareLatestGlucoseValues'
