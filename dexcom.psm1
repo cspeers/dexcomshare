@@ -233,7 +233,7 @@ function Get-DexcomShareLatestGlucoseValues
         [Alias('Interval')]
         [int]$IntervalInMinutes=1440,
         [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
-        [int]$MaxCount=[Math]::Floor($IntervalInMinutes/12),
+        [int]$MaxCount=[Math]::Floor($IntervalInMinutes/5),
         [Parameter(ValueFromPipelineByPropertyName=$true)]
         [switch]$AsNightscout
     )
