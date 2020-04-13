@@ -127,11 +127,19 @@ function Get-DexcomShareSessionId
     [CmdletBinding(DefaultParameterSetName='Credential')]
     param
     (
-        [Parameter(ValueFromPipelineByPropertyName=$true)][string]$ApplicationId=$Script:Dexcom_Settings.ApplicationId,
-        [Parameter(ValueFromPipelineByPropertyName=$true,Mandatory=$true,ParameterSetName='Clear')][Alias('UserName')][string]$AccountName,
-        [Parameter(ValueFromPipelineByPropertyName=$true,Mandatory=$true,ParameterSetName='Clear')][Alias('Password')][string]$AccountSecret,
-        [Parameter(ValueFromPipelineByPropertyName=$true,Mandatory=$true,ParameterSetName='Credential')][Alias('DexcomAccount')][pscredential]$Account,    
-        [Parameter(ValueFromPipelineByPropertyName=$true)][uri]$AuthUri=$Script:Dexcom_Settings.ShareApi.US
+        [Parameter(ValueFromPipelineByPropertyName=$true)]
+        [string]$ApplicationId=$Script:Dexcom_Settings.ApplicationId,
+        [Parameter(ValueFromPipelineByPropertyName=$true,Mandatory=$true,ParameterSetName='Clear')]
+        [Alias('UserName')]
+        [string]$AccountName,
+        [Parameter(ValueFromPipelineByPropertyName=$true,Mandatory=$true,ParameterSetName='Clear')]
+        [Alias('Password')]
+        [string]$AccountSecret,
+        [Parameter(ValueFromPipelineByPropertyName=$true,Mandatory=$true,ParameterSetName='Credential')]
+        [Alias('DexcomAccount')]
+        [pscredential]$Account,    
+        [Parameter(ValueFromPipelineByPropertyName=$true)]
+        [uri]$AuthUri=$Script:Dexcom_Settings.ShareApi.US
     )
     
     begin
@@ -217,11 +225,17 @@ function Get-DexcomShareLatestGlucoseValues
     [CmdletBinding()]
     param
     (
-        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)][Uri]$ApiEndpoint=$Script:Dexcom_Settings.ShareApi.US,
-        [Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true,ValueFromPipeline=$true)][string[]]$SessionId,
-        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)][Alias('Interval')][int]$IntervalInMinutes=1440,
-        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)][int]$MaxCount=[Math]::Floor($IntervalInMinutes/12),
-        [Parameter(ValueFromPipelineByPropertyName=$true)][switch]$AsNightscout
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [Uri]$ApiEndpoint=$Script:Dexcom_Settings.ShareApi.US,
+        [Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true,ValueFromPipeline=$true)]
+        [string[]]$SessionId,
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [Alias('Interval')]
+        [int]$IntervalInMinutes=1440,
+        [Parameter(Mandatory=$false,ValueFromPipelineByPropertyName=$true)]
+        [int]$MaxCount=[Math]::Floor($IntervalInMinutes/12),
+        [Parameter(ValueFromPipelineByPropertyName=$true)]
+        [switch]$AsNightscout
     )
     begin
     {
